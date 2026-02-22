@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+.logo-scroll {
+    animation: scroll-left 30s linear infinite;
+}
+.logo-scroll:hover {
+    animation-play-state: paused;
+}
+
+/* Custom text color utility */
+.text-333 {
+    color: #333333 !important;
+}
+
+.toast-item {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: toast-in 0.25s ease-out forwards;
+}
+.toast-hide {
+    animation: toast-out 0.2s ease-in forwards;
+}
+@keyframes toast-in {
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toast-out {
+    to { opacity: 0; transform: translateY(8px); }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+}
+    
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: #f0f1f5;
+    border-radius: 10px;
+}
+    
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+    
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+    
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f0f1f5;
+}
