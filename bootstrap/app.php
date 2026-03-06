@@ -3,18 +3,21 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\ApiTokenAuth;
 use App\Http\Middleware\Operator;
 use App\Http\Middleware\CheckUserRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // 
         $middleware->alias([
+            'api.token' => ApiTokenAuth::class,
             'operator' => Operator::class,
             'role' => CheckUserRole::class,
         ]);
@@ -44,6 +47,12 @@ return Application::configure(basePath: dirname(__DIR__))
         \Illuminate\Auth\AuthenticationException $e,
         $request
     ) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
         return redirect()->guest(route('login'));
     });
 
@@ -52,6 +61,12 @@ return Application::configure(basePath: dirname(__DIR__))
         \Illuminate\Auth\Access\AuthorizationException $e,
         $request
     ) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         return response()->view('errors.403', [], 403);
     });
 
@@ -60,6 +75,12 @@ return Application::configure(basePath: dirname(__DIR__))
         \Illuminate\Database\Eloquent\ModelNotFoundException $e,
         $request
     ) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan',
+            ], 404);
+        }
+
         return response()->view('errors.404', [], 404);
     });
 
@@ -68,6 +89,12 @@ return Application::configure(basePath: dirname(__DIR__))
         \Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e,
         $request
     ) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Endpoint tidak ditemukan',
+            ], 404);
+        }
+
         return response()->view('errors.404', [], 404);
     });
 
@@ -76,6 +103,12 @@ return Application::configure(basePath: dirname(__DIR__))
         \Illuminate\Http\Exceptions\ThrottleRequestsException $e,
         $request
     ) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Terlalu banyak permintaan',
+            ], 429);
+        }
+
         return response()->view('errors.429', [], 429);
     });
 

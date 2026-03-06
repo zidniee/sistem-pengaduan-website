@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel" alt="Laravel 11">
     <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=flat&logo=php" alt="PHP 8.2+">
     <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=flat&logo=tailwind-css" alt="Tailwind CSS">
-    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+   <img src="https://img.shields.io/badge/License-Proprietary-red.svg" alt="License">
 </p>
 
 ---

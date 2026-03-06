@@ -20,6 +20,16 @@
             </div>
         @endif
 
+        @if (session('dev_reset_url'))
+            <div class="p-4 bg-blue-50 border border-blue-300 text-blue-900 rounded space-y-2">
+                <p class="text-sm font-medium">Link reset password (mode lokal):</p>
+                <a href="{{ session('dev_reset_url') }}" class="text-sm break-all underline hover:no-underline">
+                    {{ session('dev_reset_url') }}
+                </a>
+                <p class="text-xs text-blue-700">Atur `MAIL_MAILER=smtp` di `.env` untuk pengiriman email ke inbox asli.</p>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('password.email') }}" class="mt-8 space-y-6">
             @csrf
 
