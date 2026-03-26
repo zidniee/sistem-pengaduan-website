@@ -26,17 +26,5 @@ class DatabaseSeeder extends Seeder
             ['id' => 5, 'name' => 'YouTube', 'url' => 'https://youtube.com', 'warna' => '#FF0000'],
         ]);
 
-        User::factory()->admin()->create([
-            'name' => 'AdminUtama',
-            'email' => 'zidnolmenol@gmail.com',
-            'password' => Hash::make(env('ADMIN_PASSWORD')),
-        ]);
-
-        User::factory()->admin()->create([
-            'name' => 'Admin',
-            'email' => 'admindiskominfo@admin.com',
-            'password' => Hash::make(env('ADMIN_PASSWORD_1')),
-        ]);
-
     }
 }

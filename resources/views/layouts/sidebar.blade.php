@@ -1,16 +1,16 @@
     <!-- Toaster -->
         <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3 pointer-events-none z-[60]">
-    @if(session('success'))
+    @if(session('addSuccess'))
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                createToast("{{ session('success') }}", 'bg-green-600');
+                Toast("{{ session('addSuccess') }}", 'success');
             });
         </script>
     @endif
     @if($errors->any())
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                createToast("{{ $errors->first() }}", 'bg-red-600');
+                Toast("{{ $errors->first() }}", 'error');
             });
         </script>
     @endif
@@ -195,27 +195,74 @@
             });
         }
     });
+ document.addEventListener('DOMContentLoaded', function () {
+        const toastMessage = document.getElementById('toast-message')?.dataset?.message;
+        const toastError = document.getElementById('toast-error')?.dataset?.message;
+        if (toastMessage) {
+            showToast(toastMessage, 'success');
+        }
+        if (toastError) {
+            showToast(toastError, 'error');
+        }
+    });
 
-    function createToast(message, bgColor) {
+    function Toast(message, type = 'success') {
         const container = document.getElementById('toast-container');
-        
-        // Create the toast element
-        const toast = document.createElement('div');
-        toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-xl transition-all duration-500 transform translate-y-10 opacity-0 pointer-events-auto`;
-        toast.innerHTML = message;
+        if (!container) return;
 
-        // Add to container
+        const isError = type === 'error';
+        const borderClass = isError ? 'border-red-200' : 'border-emerald-200';
+        const textClass = isError ? 'text-red-800' : 'text-emerald-800';
+        const iconColor = isError ? 'text-red-600' : 'text-emerald-600';
+        const titleText = isError ? 'Gagal' : 'Sukses';
+
+        const toast = document.createElement('div');
+        toast.className = `toast-item pointer-events-auto flex items-start gap-3 bg-white border ${borderClass} ${textClass} shadow-xl rounded-xl px-4 py-3 min-w-[260px] max-w-sm`;
+        toast.innerHTML = `
+            <div class="mt-0.5 ${iconColor}">
+                ${isError
+                    ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+                    : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'}
+            </div>
+            <div class="flex-1">
+                <p class="font-semibold text-sm">${titleText}</p>
+                <p class="text-sm">${message}</p>
+            </div>
+            <button type="button" class="text-slate-400 hover:text-slate-600" aria-label="Tutup" onclick="this.closest('.toast-item').remove()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        `;
+
         container.appendChild(toast);
 
-        // Animate In
         setTimeout(() => {
-            toast.classList.remove('translate-y-10', 'opacity-0');
-        }, 100);
-
-        // Auto-remove after 4 seconds
-        setTimeout(() => {
-            toast.classList.add('opacity-0');
-            setTimeout(() => toast.remove(), 500);
-        }, 4000);
+            toast.classList.add('toast-hide');
+            setTimeout(() => toast.remove(), 250);
+        }, 3500);
     }
+    
+    // function createToast(message, bgColor) {
+    //     const container = document.getElementById('toast-container');
+        
+    //     // Create the toast element
+    //     const toast = document.createElement('div');
+    //     toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-xl transition-all duration-500 transform translate-y-10 opacity-0 pointer-events-auto`;
+    //     toast.innerHTML = message;
+
+    //     // Add to container
+    //     container.appendChild(toast);
+
+    //     // Animate In
+    //     setTimeout(() => {
+    //         toast.classList.remove('translate-y-10', 'opacity-0');
+    //     }, 100);
+
+    //     // Auto-remove after 4 seconds
+    //     setTimeout(() => {
+    //         toast.classList.add('opacity-0');
+    //         setTimeout(() => toast.remove(), 500);
+    //     }, 4000);
+    // }
 </script>

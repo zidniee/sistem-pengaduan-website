@@ -190,7 +190,7 @@
                                             Download
                                         </a>
                                         @endif
-                                        <button onclick="openDetailAduanModalFromButton()" type="button"
+                                        <button type="button"
                                             class="complaint-edit-btn inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white font-medium rounded-md transition-all text-xs"
                                             data-update-url="{{ route('complaint.update', encrypt($complaint->id)) }}"
                                             data-ticket="{{ $complaint->ticket }}"
@@ -224,6 +224,18 @@
 </div>
 
 <script>
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.complaint-edit-btn');
+        if (button) {
+            openEditAduanModalFromButton(button);
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeEditAduanModal();
+        }
+    });
     document.addEventListener('DOMContentLoaded', function () {
         // Simulasi Loading 1.5 detik (bisa dihapus jika data sudah cepat)
         setTimeout(() => {

@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -246,6 +247,21 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
         }
 
         try {
+            $bukti = $this->downloadAndSaveScreenshot(
+                $tangkapanLayar,
+                0,
+                $namaAkun
+            );
+
+            if (! $bukti) {
+                $this->failedRows[] = [
+                    'row' => $row->getIndex(),
+                    'reason' => 'Bukti tidak bisa diambil. Pastikan link atau file tersedia.',
+                ];
+
+                return;
+            }
+
             $maxRetries = 3;
             $retryDelay = 100000;
             $complaintId = null;
@@ -259,6 +275,7 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
                         $tanggal,
                         $tiket,
                         $platformId,
+                        $bukti,
                     ) {
                         $existingComplaint = $this->complaintsCache[$link] ?? null;
 
@@ -299,6 +316,7 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
                                         'description' => 'Dalam grup ini ditemukan indikasi kuat adanya aktivitas prostitusi online...',
                                         'submitted_at' => $tanggal->format('Y-m-d H:i:s'),
                                         'ticket' => $tiket,
+                                        'bukti' => $bukti,
                                         'updated_at' => now(),
                                     ]);
 
@@ -316,7 +334,7 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
                                 'account_url' => $link,
                                 'submitted_at' => $tanggal->format('Y-m-d H:i:s'),
                                 'ticket' => $tiket,
-                                'bukti' => null,
+                                'bukti' => $bukti,
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
@@ -344,23 +362,6 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
                     }
 
                     throw $dbEx;
-                }
-            }
-
-            if ($tangkapanLayar) {
-                $bukti = $this->downloadAndSaveScreenshot(
-                    $tangkapanLayar,
-                    $complaintId,
-                    $namaAkun
-                );
-
-                if ($bukti) {
-                    DB::table('complaints')
-                        ->where('id', $complaintId)
-                        ->update([
-                            'bukti' => $bukti,
-                            'updated_at' => now(),
-                        ]);
                 }
             }
 
@@ -399,6 +400,7 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
             // Handle specific database errors with user-friendly messages
             $errorCode = $e->getCode();
             $errorMessage = $e->getMessage();
+            $errorMessageLower = strtolower($errorMessage);
             
             if ($errorCode === '23000' && str_contains($errorMessage, 'Duplicate entry')) {
                 // Try to get the existing complaint and continue
@@ -426,27 +428,43 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
                         'reason' => 'Data ini sudah pernah masuk. Silakan lanjut ke baris berikutnya.',
                     ];
                 }
-            } elseif (str_contains($errorMessage, 'Lock wait timeout')) {
+            } elseif (str_contains($errorMessageLower, 'lock wait timeout')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Sistem sedang sibuk. Coba ulangi beberapa saat lagi.',
                 ];
-            } elseif (str_contains($errorMessage, 'Deadlock')) {
+            } elseif (str_contains($errorMessageLower, 'deadlock')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Terjadi kendala saat menyimpan data. Silakan coba lagi.',
                 ];
-            } elseif (str_contains($errorMessage, 'Connection')) {
+            } elseif ($this->isConnectionErrorMessage($errorMessage)) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Koneksi terputus. Silakan coba lagi.',
                 ];
-            } elseif (str_contains($errorMessage, 'foreign key constraint')) {
+            } elseif (str_contains($errorMessageLower, "doesn't have a default value")) {
+                $this->failedRows[] = [
+                    'row' => $row->getIndex(),
+                    'reason' => 'Terjadi ketidaksesuaian struktur data. Hubungi admin untuk sinkronisasi database.',
+                ];
+            } elseif (str_contains($errorMessageLower, "column 'bukti' cannot be null")) {
+                $this->failedRows[] = [
+                    'row' => $row->getIndex(),
+                    'reason' => 'Bukti tidak bisa diproses. Pastikan file ada dan formatnya valid.',
+                ];
+            } elseif (str_contains($errorMessageLower, 'foreign key constraint')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Data tidak sesuai. Pastikan platform sudah terdaftar.',
                 ];
             } else {
+                Log::warning('Unclassified import DB error', [
+                    'row' => $row->getIndex(),
+                    'error_code' => $errorCode,
+                    'error_message' => $errorMessage,
+                ]);
+
                 // Generic database error
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
@@ -456,28 +474,39 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
         } catch (\Throwable $e) {
             // General error handling with user-friendly message
             $errorMessage = $e->getMessage();
+            $errorMessageLower = strtolower($errorMessage);
             
-            if (str_contains($errorMessage, 'Lock wait timeout')) {
+            if (str_contains($errorMessageLower, 'lock wait timeout')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Sistem sedang sibuk. Coba ulangi beberapa saat lagi.',
                 ];
-            } elseif (str_contains($errorMessage, 'Deadlock')) {
+            } elseif (str_contains($errorMessageLower, 'deadlock')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Terjadi kendala saat menyimpan data. Silakan coba lagi.',
                 ];
-            } elseif (str_contains($errorMessage, 'Connection')) {
+            } elseif ($this->isConnectionErrorMessage($errorMessage)) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Koneksi terputus. Silakan coba lagi.',
                 ];
-            } elseif (str_contains($errorMessage, 'Duplicate entry')) {
+            } elseif (str_contains($errorMessageLower, "doesn't have a default value")) {
+                $this->failedRows[] = [
+                    'row' => $row->getIndex(),
+                    'reason' => 'Terjadi ketidaksesuaian struktur data. Hubungi admin untuk sinkronisasi database.',
+                ];
+            } elseif (str_contains($errorMessageLower, "column 'bukti' cannot be null")) {
+                $this->failedRows[] = [
+                    'row' => $row->getIndex(),
+                    'reason' => 'Bukti tidak bisa diproses. Pastikan file ada dan formatnya valid.',
+                ];
+            } elseif (str_contains($errorMessageLower, 'duplicate entry')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Data yang sama sudah ada. Silakan cek daftar laporan.',
                 ];
-            } elseif (str_contains($errorMessage, 'foreign key constraint')) {
+            } elseif (str_contains($errorMessageLower, 'foreign key constraint')) {
                 $this->failedRows[] = [
                     'row' => $row->getIndex(),
                     'reason' => 'Data tidak sesuai. Pastikan platform sudah terdaftar.',
@@ -711,6 +740,28 @@ class LaporanImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, With
 
         DB::table('inspections')->insert($this->pendingInspections);
         $this->pendingInspections = [];
+    }
+
+    /**
+     * Detect real connection failures from DB/network messages.
+     *
+     * Avoid matching generic "Connection: mysql" text present in most SQL exceptions.
+     */
+    protected function isConnectionErrorMessage(string $errorMessage): bool
+    {
+        $msg = strtolower($errorMessage);
+
+        return str_contains($msg, 'server has gone away')
+            || str_contains($msg, 'lost connection')
+            || str_contains($msg, 'connection refused')
+            || str_contains($msg, 'connection timed out')
+            || str_contains($msg, 'communications link failure')
+            || str_contains($msg, 'connection reset')
+            || str_contains($msg, 'broken pipe')
+            || str_contains($msg, 'sqlstate[08')
+            || str_contains($msg, 'sqlstate[hy000] [2002]')
+            || str_contains($msg, 'sqlstate[hy000] [2006]')
+            || str_contains($msg, 'sqlstate[hy000] [2013]');
     }
 
     /**

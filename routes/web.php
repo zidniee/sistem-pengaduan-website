@@ -15,6 +15,9 @@ Route::get('lapor', [UserController::class, 'submitReportForm']);
 Route::post('lapor', [UserController::class, 'submitComplaints'])->name('submitComplaints')->middleware('throttle:5,1'); // 5 submissions per minute
 
 // Lacak laporan
+Route::get('/lacak-laporan', fn() => redirect()->route('homepage')
+    ->with('track_error', 'Kode laporan tidak ditemukan. Silakan periksa kembali kode yang Anda masukkan.')
+    ->withInput());
 Route::post('/lacak-laporan', [ReportController::class, 'track'])
     ->name('track-laporan')
     ->middleware('throttle:20,1'); // 20 tracking requests per minute
@@ -39,7 +42,7 @@ Route::middleware('operator')->group(function() {
     Route::post('admin/platforms', [OperatorController::class, 'addPlatform'])->name('platforms.add')->middleware('throttle:10,1'); // 10 additions per minute
     Route::delete('admin/platforms/{id}', [OperatorController::class, 'deletePlatform'])->name('platforms.delete')->middleware('throttle:10,1'); // 10 deletions per minute
     //Generate PDF Report
-    Route::get('admin/daftar-laporan/audit/pdf', [OperatorController::class, 'generatePDFReport'])->name('laporan.audit.pdf')->middleware('throttle:5,1440'); // 5 PDFs per day
+    Route::get('admin/daftar-laporan/audit/pdf', [OperatorController::class, 'generatePDFReport'])->name('laporan.audit.pdf');// ->middleware('throttle:5,1440'); // 5 PDFs per day
     // Import Excel Laporan
     Route::get('admin/daftar-laporan/import', [OperatorController::class, 'showImportForm'])->name('laporan.import.form');
     Route::post('admin/daftar-laporan/import', [OperatorController::class, 'importLaporan'])->name('laporan.import')->middleware('throttle:10,1'); // 10 imports per minute

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('platforms', function (Blueprint $table) {
             $table->integer('id')->autoIncrement();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('url');
             $table->string('warna', 7)->default('#0059ff');
             $table->timestamps();

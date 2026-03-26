@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('account_url')->unique();
             $table->date('submitted_at');
             $table->string('ticket')->nullable();
-            $table->string('bukti')->nullable();
+            $table->string('bukti');
             $table->timestamps();
 
             // Foreign Keys

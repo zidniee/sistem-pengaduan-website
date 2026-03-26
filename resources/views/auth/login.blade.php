@@ -21,9 +21,11 @@
 
             <div class="p-8 sm:p-10">
                 <div class="text-center mb-8">
-                    <img src="{{ asset('images/diskominfosp-black.png') }}" 
-                         alt="Logo Diskominfo SP Kota Surakarta" 
-                         class="h-12 w-auto mx-auto mb-4 drop-shadow-md">
+                    <a href="{{ route('homepage') }}">
+                        <img src="{{ asset('images/diskominfosp-black.png') }}" 
+                             alt="Logo Diskominfo SP Kota Surakarta" 
+                             class="h-12 w-auto mx-auto mb-4 drop-shadow-md">
+                    </a>
                     
                     <h2 class="text-2xl font-bold text-[#0f172a]">Selamat Datang</h2>
                     <p class="text-slate-500 text-sm mt-1">Silakan masuk untuk melanjutkan</p>

@@ -249,7 +249,7 @@ class OperatorController extends Controller
             'platform' => 'required|exists:platforms,id',
             'nama' => 'required|string|max:255',
             'tanggal' => 'required|date|before_or_equal:today',
-            'url' => 'required|string|max:500', // url terlalu strict
+            'url' => 'required|url|max:500',
             'alasan' => 'required|string|min:10|max:1000',
         ]);
 
@@ -277,8 +277,8 @@ class OperatorController extends Controller
             return redirect()->back()->with('addSuccess', 'Laporan berhasil ditambahkan.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->withInput($req->all())
-                ->with('addError', 'Gagal menambahkan laporan. Silakan coba lagi. (' . $e->getMessage() . ')');
+                ->with('addError', 'Gagal menambahkan laporan. Silakan coba lagi. (' . $e->getMessage() . ')')
+                ->withInput($req->all());
         }
     }
 
@@ -369,7 +369,7 @@ class OperatorController extends Controller
     public function addPlatform(Request $req) {
         // TODO update validasi agar tidak terlalu strict
         $req->validate([
-            'nama_platform' => 'required|string|max:255',Rule::unique('platforms, name')->ignore(new Platforms()),
+            'nama_platform' => ['required', 'string', 'max:255', Rule::unique('platforms', 'name')],
             'url_platform' => 'required|string|max:500',
             'warna_platform' => 'required|string|size:7|regex:/^#[0-9A-Fa-f]{6}$/',
         ], [

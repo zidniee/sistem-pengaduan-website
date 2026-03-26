@@ -80,10 +80,21 @@
                 </p>
             </div>
 
-            <button class="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 cursor-pointer text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-blue-900/20">
+            <button id="process-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-800 cursor-pointer text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-blue-900/20"
+                data-update-url="{{ route('complaint.update', encrypt($complaint->id)) }}"
+                data-ticket="{{ $complaint->ticket }}"
+                data-account-url="{{ $complaint->account_url }}"
+                data-platform-id="{{ $complaint->platform_id }}"
+                data-submitted-at="{{ $complaint->submitted_at ? \Carbon\Carbon::parse($complaint->submitted_at)->format('Y-m-d') : '' }}"
+                data-checked-at="{{ $complaint->latestInspection?->inspected_at ? \Carbon\Carbon::parse($complaint->latestInspection->inspected_at)->format('Y-m-d') : '' }}"
+                data-status="{{ $complaint->latestInspection?->new_status }}"
+                data-status="{{ $complaint->account_status }}"
+                data-screenshot-url="{{ $complaint->screenshot_url ?? '' }}"
+                data-description="{{ $complaint->description ?? '' }}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Proses Aduan
             </button>
+             @include('Operator.partials.edit-complaints')
         </div>
 
         <div class="p-6 md:p-8 space-y-8">
@@ -189,6 +200,19 @@
             skeleton.style.display = 'none';
             content.classList.remove('hidden', 'opacity-0');
         }, 2000);
+    });
+
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('#process-btn');
+        if (button) {
+            openEditAduanModalFromButton(button);
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeEditAduanModal();
+        }
     });
 </script>
 
