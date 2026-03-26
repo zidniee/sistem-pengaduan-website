@@ -22,7 +22,7 @@ Route::post('/lacak-laporan', [ReportController::class, 'track'])
     ->name('track-laporan')
     ->middleware('throttle:20,1'); // 20 tracking requests per minute
 
-Route::middleware('auth')->group(function() {
+Route::middleware('auth', 'role:user')->group(function() {
     Route::get('user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
     Route::get('user/history', [UserController::class, 'history'])->name('user.history')->middleware('throttle:30,1'); // 30 requests per minute
 });

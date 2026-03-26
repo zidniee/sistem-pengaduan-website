@@ -28,7 +28,18 @@ class CheckUserRole
         if ($role && Auth::user()->role !== $role) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Forbidden'], 403);
+            }   
+            // Redirect authenticated users to the appropriate area when role mismatch happens.
+            if (in_array(Auth::user()->role, ['admin', 'operator'], true)) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'Anda tidak memiliki akses ke halaman user.');
             }
+
+            if (Auth::user()->role === 'user') {
+                return redirect()->route('user.dashboard')
+                    ->with('error', 'Anda tidak memiliki akses ke halaman admin.');
+            }
+
             abort(403);
         }
 

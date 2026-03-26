@@ -43,10 +43,12 @@ class Operator
             return $next($request);
         }
 
-        // Return 401 for non-admin authenticated users
+        // Block non-admin authenticated users from admin area.
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        abort(403);
+
+        return redirect()->route('user.dashboard')
+            ->with('error', 'Anda tidak memiliki akses ke halaman admin.');
     }
 }
